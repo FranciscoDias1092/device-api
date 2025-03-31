@@ -40,6 +40,7 @@ http://localhost:8080/swagger-ui/index.html.
 
 ### Delete a device:
 - Users can delete a devices by its id.
+- If the device is IN USE, an error message is returned.
 - If the device doesn't exist, an error message (NOT_FOUND) is returned.
 
 ## Call services
