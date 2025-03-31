@@ -2,13 +2,14 @@ package com.francisco.deviceapi.service;
 
 import com.francisco.deviceapi.domain.Device;
 import com.francisco.deviceapi.domain.enums.DeviceState;
+import com.francisco.deviceapi.dto.DeviceDTO;
 import com.francisco.deviceapi.exception.*;
 import com.francisco.deviceapi.repository.DeviceRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -65,8 +66,8 @@ public class DeviceService {
      * @return a {@link List} containing all {@link Device} with matching Brand and/or
      * State (if params in query) or a {@link List} containing all devices.
      */
-    public List<Device> getDevices(String brand, DeviceState state) {
-        List<Device> deviceList = deviceRepository.findByBrandAndState(brand, state)
+    public List<DeviceDTO> getDevices(String brand, DeviceState state) {
+        List<DeviceDTO> deviceList = deviceRepository.findByBrandAndState(brand, state)
                 .orElseThrow(DeviceNotFoundException::new);
 
         if (deviceList.isEmpty()) {
@@ -86,34 +87,36 @@ public class DeviceService {
      * @param device a {@link Device} containing updated details.
      * @return the updated {@link Device}
      */
+    @Transactional
     public Device updateDevice(Long id, Device device) {
-        Device savedDevice = getDevice(id);
+        Device persistedDevice = deviceRepository.findByIdForUpdate(id).orElseThrow(DeviceNotFoundException::new);
 
-        savedDevice.setName(device.getName());
-        savedDevice.setBrand(device.getBrand());
-        savedDevice.setState(device.getState());
+        persistedDevice.setName(device.getName());
+        persistedDevice.setBrand(device.getBrand());
+        persistedDevice.setState(device.getState());
 
-        return deviceRepository.save(savedDevice);
+        return deviceRepository.save(persistedDevice);
     }
 
     /**
      * Partially updates an existing {@link Device}, except for the creation time, which can't be
      * modified after creation.
-     *
+     * <p>
      * Throws a {@link DeviceInUseException} if state is IN_USE and Brand and/or Name are to be changed.
      *
      * @param id the ID of the {@link Device} to be updated.
      * @param deviceDetails a {@link Device} containing updated details.
      * @return the updated {@link Device}
      */
+    @Transactional
     public Device patchDevice(Long id, Device deviceDetails) {
-        Device persistedDevice = getDevice(id);
+        Device persistedDevice = deviceRepository.findByIdForUpdate(id).orElseThrow(DeviceNotFoundException::new);
 
         Optional.ofNullable(deviceDetails.getState()).ifPresent(persistedDevice::setState);
 
         if (persistedDevice.getState() == DeviceState.IN_USE &&
                 (deviceDetails.getName() != null || deviceDetails.getBrand() != null)) {
-            throw new DeviceInUseException("Device is in use and its properties cannot be updated!");
+            throw new DeviceInUseException("Device is IN USE so its properties cannot be updated!");
         }
 
         Optional.ofNullable(deviceDetails.getName()).ifPresent(persistedDevice::setName);

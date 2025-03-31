@@ -1,0 +1,39 @@
+services:
+  deviceapi:
+    build: .
+    image: deviceapi:latest
+    container_name: deviceapi-container
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/devicedb
+      - SPRING_DATASOURCE_driver-class-name=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=pass
+      - SPRING_DATASOURCE_PASSWORD=user
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: postgres:13
+    container_name: db-container
+    environment:
+      - POSTGRES_DB=devicedb
+      - POSTGRES_USER=pass
+      - POSTGRES_PASSWORD=user
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    ports:
+      - "5432:5432"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local

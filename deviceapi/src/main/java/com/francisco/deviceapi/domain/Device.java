@@ -3,6 +3,7 @@ package com.francisco.deviceapi.domain;
 import com.francisco.deviceapi.domain.enums.DeviceState;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.time.LocalDate;
 
@@ -23,14 +24,30 @@ public class Device {
     )
     private Long id;
 
+    @Column(
+            nullable = false
+    )
     private String name;
 
+    @Column(
+            nullable = false
+    )
     private String brand;
 
+    @Column(
+            nullable = false
+    )
     @Enumerated(EnumType.STRING)
     private DeviceState state;
 
+    @Column(
+            nullable = false
+    )
     private LocalDate creationTime;
+
+    public Device() {
+
+    }
 
     private Device(Builder builder) {
         this.name = builder.name;
